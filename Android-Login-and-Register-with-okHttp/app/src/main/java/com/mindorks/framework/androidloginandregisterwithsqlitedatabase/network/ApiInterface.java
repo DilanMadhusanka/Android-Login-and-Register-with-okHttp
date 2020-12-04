@@ -2,10 +2,10 @@ package com.mindorks.framework.androidloginandregisterwithsqlitedatabase.network
 
 import com.google.gson.JsonObject;
 import com.mindorks.framework.androidloginandregisterwithsqlitedatabase.request.AuthRequest;
+import com.mindorks.framework.androidloginandregisterwithsqlitedatabase.request.SignUpRequest;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
-import retrofit2.http.GET;
 import retrofit2.http.POST;
 
 public interface ApiInterface {
@@ -13,12 +13,11 @@ public interface ApiInterface {
 //    @GET("posts")
 //    Call<List<JsonObject>>getAllPharmacies();
 
-    @GET("all")
-    Call<String> getTest();
-
-//    @FormUrlEncoded
     @POST("login")
     Call<JsonObject> postLogin(@Body AuthRequest authRequest);
+
+    @POST("register")
+    Call<JsonObject> postRegister(@Body SignUpRequest signUpRequest);
 
 //    @FormUrlEncoded
 //    @POST("/auth/")

@@ -2,6 +2,7 @@ package com.mindorks.framework.androidloginandregisterwithsqlitedatabase.activit
 
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -9,12 +10,24 @@ import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.AppCompatTextView;
 import androidx.core.widget.NestedScrollView;
 
-import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.mindorks.framework.androidloginandregisterwithsqlitedatabase.R;
 import com.mindorks.framework.androidloginandregisterwithsqlitedatabase.helpers.InputValidation;
 import com.mindorks.framework.androidloginandregisterwithsqlitedatabase.models.User;
+import com.mindorks.framework.androidloginandregisterwithsqlitedatabase.network.ApiClient;
+import com.mindorks.framework.androidloginandregisterwithsqlitedatabase.network.ApiInterface;
+import com.mindorks.framework.androidloginandregisterwithsqlitedatabase.request.SignUpRequest;
+import com.mindorks.framework.androidloginandregisterwithsqlitedatabase.response.SignUpResponse;
+import com.mindorks.framework.androidloginandregisterwithsqlitedatabase.utils.Constants;
+
+import java.util.Objects;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class RegisterActivity extends AppCompatActivity implements View.OnClickListener{
 
@@ -22,12 +35,14 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
 
     private NestedScrollView nestedScrollView;
 
-    private TextInputLayout textInputLayoutName;
+    private TextInputLayout textInputLayoutFirstName;
+    private TextInputLayout textInputLayoutLastName;
     private TextInputLayout textInputLayoutEmail;
     private TextInputLayout textInputLayoutPassword;
     private TextInputLayout textInputLayoutConfirmPassword;
 
-    private TextInputEditText textInputEditTextName;
+    private TextInputEditText textInputEditTextFirstName;
+    private TextInputEditText textInputEditTextLastName;
     private TextInputEditText textInputEditTextEmail;
     private TextInputEditText textInputEditTextPassword;
     private TextInputEditText textInputEditTextConfirmPassword;
@@ -38,6 +53,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
     private InputValidation inputValidation;
 //    private DatabaseHelper databaseHelper;
     private User user;
+    private SignUpRequest signUpRequest;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -56,12 +72,14 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
     private void initViews() {
         nestedScrollView = (NestedScrollView) findViewById(R.id.nestedScrollView);
 
-        textInputLayoutName = (TextInputLayout) findViewById(R.id.textInputLayoutName);
+        textInputLayoutFirstName = (TextInputLayout) findViewById(R.id.textInputLayoutFirstName);
+        textInputLayoutLastName = (TextInputLayout) findViewById(R.id.textInputLayoutLastName);
         textInputLayoutEmail = (TextInputLayout) findViewById(R.id.textInputLayoutEmail);
         textInputLayoutPassword = (TextInputLayout) findViewById(R.id.textInputLayoutPassword);
         textInputLayoutConfirmPassword = (TextInputLayout) findViewById(R.id.textInputLayoutConfirmPassword);
 
-        textInputEditTextName = (TextInputEditText) findViewById(R.id.textInputEditTextName);
+        textInputEditTextFirstName = (TextInputEditText) findViewById(R.id.textInputEditTextFirstName);
+        textInputEditTextLastName = (TextInputEditText) findViewById(R.id.textInputEditTextLastName);
         textInputEditTextEmail = (TextInputEditText) findViewById(R.id.textInputEditTextEmail);
         textInputEditTextPassword = (TextInputEditText) findViewById(R.id.textInputEditTextPassword);
         textInputEditTextConfirmPassword = (TextInputEditText) findViewById(R.id.textInputEditTextConfirmPassword);
@@ -88,6 +106,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
         inputValidation = new InputValidation(activity);
 //        databaseHelper = new DatabaseHelper(activity);
         user = new User();
+        signUpRequest = new SignUpRequest();
 
     }
 
@@ -115,7 +134,10 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
      * This method is to validate the input text fields and post data to SQLite
      */
     private void postDataToSQLite() {
-        if (!inputValidation.isInputEditTextFilled(textInputEditTextName, textInputLayoutName, getString(R.string.error_message_name))) {
+        if (!inputValidation.isInputEditTextFilled(textInputEditTextFirstName, textInputLayoutFirstName, getString(R.string.error_message_first_name))) {
+            return;
+        }
+        if (!inputValidation.isInputEditTextFilled(textInputEditTextLastName, textInputLayoutLastName, getString(R.string.error_message_last_name))) {
             return;
         }
         if (!inputValidation.isInputEditTextFilled(textInputEditTextEmail, textInputLayoutEmail, getString(R.string.error_message_email))) {
@@ -148,19 +170,85 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
 //        }
         else {
             // Snack Bar to show error message that record already exists
-            Snackbar.make(nestedScrollView, getString(R.string.error_email_exists), Snackbar.LENGTH_LONG).show();
+//            Snackbar.make(nestedScrollView, getString(R.string.error_email_exists), Snackbar.LENGTH_LONG).show();
+
+            registerUser(textInputEditTextFirstName.getText().toString().trim(), textInputEditTextLastName.getText().toString().trim(), textInputEditTextEmail.getText().toString().trim(), textInputEditTextPassword.getText().toString().trim());
         }
 
 
     }
 
+    private void registerUser(String firstName, String lastName, String email,String password){
 
+        ApiInterface apiService = ApiClient.getRetrofitClient();
+
+        signUpRequest.setFirst_name(firstName);
+        signUpRequest.setLast_name(lastName);
+        signUpRequest.setEmail(email);
+        signUpRequest.setPassword(password);
+        signUpRequest.setType("tutor");
+
+
+        Call<JsonObject> call = apiService.postRegister(signUpRequest);
+        call.enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                try{
+                    Gson gson = new Gson();
+                    String userData = gson.toJson(response.body());
+                    SignUpResponse user = gson.fromJson(response.body(), SignUpResponse.class);
+                    System.out.println(user.getCode());
+                    if(user.getCode() == Constants.AUTH_SUCCESS_CODE){
+//                        SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences(Constants.PHARMACY_PREFS, Context.MODE_PRIVATE);
+//                        SharedPreferences.Editor editor= sharedPreferences.edit();
+//                        editor.putString(Constants.USER_DATA,userData);
+//                        editor.putString(Constants.API_TOKEN,user.getToken());
+//                        editor.apply();
+                        System.out.println("registered!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1");
+
+//                        Objects.requireNonNull(getActivity())
+//                                .getSupportFragmentManager()
+//                                .beginTransaction()
+//                                .replace(R.id.home_fragment_container,new UserProfileFragment())
+//                                .commit();
+                        Toast.makeText(getApplicationContext(), user.getMessage(),Toast.LENGTH_LONG).show();
+                    }
+//                    else if(user.getCode() == Constants.NO_VALID_SUBSCRIPTION_PLAN){
+//                        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+//                        builder.setTitle(Objects.requireNonNull(getActivity()).getResources().getString(R.string.fail));
+//                        builder.setMessage(getActivity().getResources().getString(R.string.err_no_valid_subscription_plan));
+//                        builder.setCancelable(true);
+//
+//                        AlertDialog dialog = builder.create();
+//                        dialog.show();
+//                    }
+                    else {
+//                        Toast.makeText(getApplicationContext(), Objects.requireNonNull(getApplicationContext()).getResources().getString(R.string.err_login_fail),Toast.LENGTH_LONG).show();
+                        Toast.makeText(getApplicationContext(), user.getMessage(),Toast.LENGTH_LONG).show();
+                    }
+
+                }
+                catch (Exception e){
+                    Toast.makeText(getApplicationContext(), Objects.requireNonNull(getApplicationContext()).getResources().getString(R.string.err_unable_to_login),Toast.LENGTH_SHORT).show();
+                }
+
+
+            }
+
+            @Override
+            public void onFailure(Call<JsonObject> call, Throwable t) {
+                Toast.makeText(getApplicationContext(), Objects.requireNonNull(getApplicationContext()).getResources().getString(R.string.err_unable_to_login),Toast.LENGTH_SHORT).show();
+            }
+        });
+
+    }
 
     /**
      * This method is to empty all input edit text
      */
     private void emptyInputEditText() {
-        textInputEditTextName.setText(null);
+        textInputEditTextFirstName.setText(null);
+        textInputEditTextLastName.setText(null);
         textInputEditTextEmail.setText(null);
         textInputEditTextPassword.setText(null);
         textInputEditTextConfirmPassword.setText(null);
