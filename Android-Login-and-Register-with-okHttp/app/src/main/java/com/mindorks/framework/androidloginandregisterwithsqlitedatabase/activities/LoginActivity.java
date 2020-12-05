@@ -113,6 +113,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             case R.id.textViewLinkRegister:
                 // Navigate to RegisterActivity
                 Intent intentRegister = new Intent(getApplicationContext(), RegisterActivity.class);
+                intentRegister.putExtra("role", getString(R.string.role_tutor));
                 startActivity(intentRegister);
                 break;
             case R.id.textViewLinkForgotPassword:

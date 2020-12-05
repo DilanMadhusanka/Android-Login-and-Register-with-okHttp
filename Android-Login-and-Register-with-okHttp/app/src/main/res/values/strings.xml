@@ -28,4 +28,5 @@
     <string name="go_back">Go Back</string>
     <string name="first_name">First Name</string>
     <string name="last_name">Last Name</string>
+    <string name="role_tutor">tutor</string>
 </resources>

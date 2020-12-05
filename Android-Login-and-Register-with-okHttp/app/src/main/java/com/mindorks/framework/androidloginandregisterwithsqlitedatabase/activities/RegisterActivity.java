@@ -54,6 +54,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
 //    private DatabaseHelper databaseHelper;
     private User user;
     private SignUpRequest signUpRequest;
+    private String role;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -107,6 +108,8 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
 //        databaseHelper = new DatabaseHelper(activity);
         user = new User();
         signUpRequest = new SignUpRequest();
+        role = getIntent().getExtras().getString("role");
+        System.out.println(role);
 
     }
 
@@ -187,6 +190,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
         signUpRequest.setEmail(email);
         signUpRequest.setPassword(password);
         signUpRequest.setType("tutor");
+//        signUpRequest.setType(role);
 
 
         Call<JsonObject> call = apiService.postRegister(signUpRequest);
